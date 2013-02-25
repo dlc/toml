@@ -21,8 +21,9 @@ package TOML;
 # -------------------------------------------------------------------
 
 use strict;
-use vars qw($VERSION @EXPORT);
 use base qw(Exporter);
+
+our( $VERSION, @EXPORT );
 
 use Text::Balanced qw(extract_bracketed);
 
