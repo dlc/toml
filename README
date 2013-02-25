@@ -1,0 +1,21 @@
+NAME
+    TOML - Parser for Tom's Obvious, Minimal Language.
+
+SYNOPSIS
+        use TOML qw(from_toml);
+
+        my $toml = slurp("~/.foo.toml");
+        my $data = from_toml($toml);
+
+DESCRIPTIOn
+    "TOML" implements a parser for Tom's Obvious, Minimal Language, as
+    defined at <https://github.com/mojombo/toml>.
+
+    "TOML" exports a single subroutine, "from_toml", that transforms a
+    string containing toml to a perl data structure. This data structure
+    complies with the tests provided at
+    <https://github.com/mojombo/toml/tree/master/tests>.
+
+AUTHOR
+    Darren Chamberlain <darren@cpan.org>
+
