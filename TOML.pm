@@ -192,3 +192,6 @@ said error.
 
 Darren Chamberlain <darren@cpan.org>
 
+=head1 ACKNOWLEDGEMENTS
+
+  * Matthias Bethke <matthias@towiski.de>
