@@ -23,17 +23,19 @@ package TOML;
 use strict;
 use base qw(Exporter);
 
-our( $VERSION, @EXPORT );
+our ($VERSION, @EXPORT, $SYNTAX_ERROR);
 
 use Text::Balanced qw(extract_bracketed);
 
 $VERSION = "0.9";
 @EXPORT = qw(from_toml);
+$SYNTAX_ERROR = q(Syntax error);
 
 sub from_toml {
     my $string = shift;
     my %toml;   # Final data structure
     my $cur;
+    my $err;    # Error
 
     # Normalize
     $string =
@@ -46,6 +48,9 @@ sub from_toml {
     while ($string) {
         # strip leading whitespace, including newlines
         $string =~ s/^\s*//s;
+
+        # Store current value, to check for invalid syntax
+        my $string_start = $string;
 
         # Strings
         if ($string =~ s/^(\S+)\s*=\s*"([^"]*)"\s*//) {
@@ -134,9 +139,15 @@ sub from_toml {
                 }
             }
         }
+
+        if ($string eq $string_start) {
+            # If $string hasn't been modified by this point, then
+            # it contains invalid syntax.
+            return wantarray ? (undef, $SYNTAX_ERROR) : undef;
+        }
     }
 
-    return \%toml;
+    return wantarray ? (\%toml, $err) : \%toml;
 }
 
 1;
@@ -154,7 +165,13 @@ TOML - Parser for Tom's Obvious, Minimal Language.
     my $toml = slurp("~/.foo.toml");
     my $data = from_toml($toml);
 
-=head1 DESCRIPTIOn
+    # With error checking
+    my ($data, $err) = from_toml($toml);
+    unless ($data) {
+        die "Error parsing toml: $err";
+    }
+
+=head1 DESCRIPTION
 
 C<TOML> implements a parser for Tom's Obvious, Minimal Language, as
 defined at L<https://github.com/mojombo/toml>.
@@ -163,7 +180,10 @@ C<TOML> exports a single subroutine, C<from_toml>, that transforms a string
 containing toml to a perl data structure. This data structure complies
 with the tests provided at L<https://github.com/mojombo/toml/tree/master/tests>.
 
-
+If called in list context, C<from_toml> produces a (C<hash>, C<error_string>) tuple,
+where C<error_string> is C<undef> on non-errors. If there is an error, then
+C<hash> will be undefined and C<error_string> will contains (scant) details about
+said error.
 
 =head1 AUTHOR
 
