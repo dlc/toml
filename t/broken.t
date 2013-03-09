@@ -9,9 +9,10 @@ use_ok("TOML");
 my $toml = q{foo = "bar'};
 my $new;
 my $err;
+my $serr = $TOML::SYNTAX_ERROR = $TOML::SYNTAX_ERROR ;
 
 $new = from_toml($toml);
 is($new, undef, "Invalid syntax returns <undef> in scalar context");
 
 ($new, $err) = from_toml($toml);
-is($err, $TOML::SYNTAX_ERROR, 'Invalid syntx returns <undef>, $err in list context');
+like($err, qr/^$serr/, 'Invalid syntx returns <undef>, $err in list context');

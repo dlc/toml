@@ -36,6 +36,7 @@ sub from_toml {
     my %toml;   # Final data structure
     my $cur;
     my $err;    # Error
+    my $lineno = 0;
 
     # Normalize
     $string =
@@ -48,6 +49,7 @@ sub from_toml {
     while ($string) {
         # strip leading whitespace, including newlines
         $string =~ s/^\s*//s;
+        $lineno++;
 
         # Store current value, to check for invalid syntax
         my $string_start = $string;
@@ -143,7 +145,8 @@ sub from_toml {
         if ($string eq $string_start) {
             # If $string hasn't been modified by this point, then
             # it contains invalid syntax.
-            return wantarray ? (undef, $SYNTAX_ERROR) : undef;
+           (my $err_bits = $string) =~ s/(.+?)\n.*//s;
+            return wantarray ? (undef, "$SYNTAX_ERROR at line $lineno: $err_bits") : undef;
         }
     }
 
