@@ -57,6 +57,14 @@ test(
 [foo]
 ...
 
+is(to_toml(+{ foo => \1 }), <<'...');
+foo = true
+...
+
+is(to_toml(+{ bar => \0 }), <<'...');
+bar = false
+...
+
 done_testing;
 
 sub test {

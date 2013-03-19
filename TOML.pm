@@ -73,8 +73,20 @@ sub _serialize {
     if (!$type) {
         return string_to_json($value);
     } elsif ($type eq 'ARRAY') {
-        sprintf('[%s]', join(", ", map { _serialize($_) } @$value));
+        return sprintf('[%s]', join(", ", map { _serialize($_) } @$value));
+    } elsif ($type eq 'SCALAR') {
+        if (defined $$value) {
+            if ($$value eq '0') {
+                return 'false';
+            } elsif ($$value eq '1') {
+                return 'true';
+            } else {
+                Carp::croak("cannot encode reference to scalar");
+            }
+        }
+        Carp::croak("cannot encode reference to scalar");
     }
+    Carp::croak("Bad type in to_toml: $type");
 }
 
 my %esc = (
