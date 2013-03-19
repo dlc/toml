@@ -166,7 +166,7 @@ sub from_toml {
         }
 
         # Numbers
-        if ($string =~ s/^(\S+)\s*=\s*([+-]?[\d.]+)\n//) {
+        if ($string =~ s/^(\S+)\s*=\s*([+-]?[\d.]+)(?:\n|\z)//) {
             my $key = "$1";
             my $num = $2;
             if ($cur) {
