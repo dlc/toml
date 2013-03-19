@@ -22,14 +22,92 @@ package TOML;
 
 use strict;
 use base qw(Exporter);
+use Carp ();
 
-our ($VERSION, @EXPORT, $SYNTAX_ERROR);
+our ($VERSION, @EXPORT, $SYNTAX_ERROR, @_NAMESPACE);
 
 use Text::Balanced qw(extract_bracketed);
 
 $VERSION = "0.9";
-@EXPORT = qw(from_toml);
+@EXPORT = qw(from_toml to_toml);
 $SYNTAX_ERROR = q(Syntax error);
+
+sub to_toml {
+    my $stuff = shift;
+    local @_NAMESPACE = ();
+    _to_toml($stuff);
+}
+
+sub _to_toml {
+    my ($stuff) = @_;
+
+    if (ref $stuff eq 'HASH') {
+        my $res = '';
+        my @keys = sort keys %$stuff;
+        for my $key (grep { ref $stuff->{$_} ne 'HASH' } @keys) {
+            my $val = $stuff->{$key};
+            $res .= "$key = " . _serialize($val) . "\n";
+        } 
+        for my $key (grep { ref $stuff->{$_} eq 'HASH' } @keys) {
+            my $val = $stuff->{$key};
+            local @_NAMESPACE = (@_NAMESPACE, $key);
+            $res .= sprintf("[%s]\n", join(".", @_NAMESPACE));
+            $res .= _to_toml($val);
+        } 
+        return $res;
+    } else {
+        Carp::croak("You cannot convert non-HashRef values to TOML");
+    }
+}
+
+use B;
+sub _serialize {
+    my $value = shift;
+    my $b_obj = B::svref_2object(\$value);
+    my $flags = $b_obj->FLAGS;
+
+    return $value
+        if $flags & ( B::SVp_IOK | B::SVp_NOK ) and !( $flags & B::SVp_POK ); # SvTYPE is IV or NV?
+
+    my $type = ref($value); 
+    if (!$type) {
+        return string_to_json($value);
+    } elsif ($type eq 'ARRAY') {
+        return sprintf('[%s]', join(", ", map { _serialize($_) } @$value));
+    } elsif ($type eq 'SCALAR') {
+        if (defined $$value) {
+            if ($$value eq '0') {
+                return 'false';
+            } elsif ($$value eq '1') {
+                return 'true';
+            } else {
+                Carp::croak("cannot encode reference to scalar");
+            }
+        }
+        Carp::croak("cannot encode reference to scalar");
+    }
+    Carp::croak("Bad type in to_toml: $type");
+}
+
+my %esc = (
+    "\n" => '\n',
+    "\r" => '\r',
+    "\t" => '\t',
+    "\f" => '\f',
+    "\b" => '\b',
+    "\"" => '\"',
+    "\\" => '\\\\',
+    "\'" => '\\\'',
+);
+sub string_to_json {
+    my ($arg) = @_;
+
+    $arg =~ s/([\x22\x5c\n\r\t\f\b])/$esc{$1}/g;
+    $arg =~ s/\//\\\//g if 1;
+    $arg =~ s/([\x00-\x08\x0b\x0e-\x1f])/'\\u00' . unpack('H2', $1)/eg;
+
+    return '"' . $arg . '"';
+}
 
 sub from_toml {
     my $string = shift;
@@ -100,7 +178,7 @@ sub from_toml {
         }
 
         # Numbers
-        if ($string =~ s/^(\S+)\s*=\s*([+-]?[\d.]+)\n//) {
+        if ($string =~ s/^(\S+)\s*=\s*([+-]?[\d.]+)(?:\n|\z)//) {
             my $key = "$1";
             my $num = $2;
             if ($cur) {
