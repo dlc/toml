@@ -5,36 +5,36 @@ use Test::More;
 
 use TOML;
 
-is(to_toml(
+test(
     +{
         foo => 'bar',
     }
-), <<'...', 'str');
+, <<'...', 'str');
 foo = "bar"
 ...
 
-is(to_toml(
+test(
     +{
         foo => 3,
     }
-), <<'...', 'int');
+, <<'...', 'int');
 foo = 3
 ...
 
-is(to_toml(
+test(
     +{
         foo => {
             bar => 'baz',
             iya => 'aan',
         },
     }
-), <<'...', 'nest');
+, <<'...', 'nest');
 [foo]
 bar = "baz"
 iya = "aan"
 ...
 
-is(to_toml(
+test(
     +{
         foo => {
             bar => 'baz',
@@ -42,12 +42,28 @@ is(to_toml(
         },
         ya => [1,2,'3'],
     }
-), <<'...', 'array');
+, <<'...', 'array');
 ya = [1, 2, "3"]
 [foo]
 bar = "baz"
 iya = "aan"
 ...
 
+test(
+    +{
+        foo => { },
+    }
+, <<'...', 'Empty HashRef');
+[foo]
+...
+
 done_testing;
+
+sub test {
+    my ($perl, $toml, $desc) = @_;
+    is(to_toml($perl), $toml, $desc);
+    my ($ret, $err) = from_toml(to_toml($perl));
+    is_deeply($ret, $perl, $desc);
+    ok(!$err) or diag $err;
+}
 
