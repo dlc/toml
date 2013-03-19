@@ -38,7 +38,7 @@ data = [ ["gamma", "delta"], [1, 2] ] # just an update to make sure parsers supp
 };
 
 # Expected structure
-my $yaml = {
+my $data = {
           'database' => {
                         'ports' => [
                                    '8001',
@@ -84,4 +84,4 @@ Likes tater tots and beer.',
 
 
 my $new = from_toml($toml);
-is_deeply($yaml, $new, "Structure matches example YAML");
+is_deeply($data, $new, "Structure matches example data");
