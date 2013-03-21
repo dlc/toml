@@ -291,5 +291,10 @@ Darren Chamberlain <darren@cpan.org>
 
 =head1 CONTRIBUTORS
 
-  * Tokuhiro Matsuno <tokuhirom@cpan.org>
-  * Matthias Bethke <matthias@towiski.de>
+=over 4
+
+=item Tokuhiro Matsuno <tokuhirom@cpan.org>
+
+=item Matthias Bethke <matthias@towiski.de>
+
+=back
