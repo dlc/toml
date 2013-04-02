@@ -34,7 +34,6 @@ $VERSION = "0.91";
 $SYNTAX_ERROR = q(Syntax error);
 
 my %UNESCAPE = (
-    q{0} => "\x00",
     q{b} => "\x08",
     q{t} => "\x09",
     q{n} => "\x0a",
@@ -151,7 +150,7 @@ sub from_toml {
             $val =~ s/^"//;
             $val =~ s/"$//;
             $val =~ s!
-                \\([0btnfr"/\\])
+                \\([btnfr"/\\])
                 |
                 \\u([0-9A-Fa-f]{4})
             !
