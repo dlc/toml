@@ -144,7 +144,7 @@ sub from_toml {
         my $string_start = $string;
 
         # Strings
-        if ($string =~ s/^(\S+)\s*=\s*"([^"]*)"\s*//) {
+        if ($string =~ s/^(\S+)\s*=\s*"(.+)"\s*//) {
             my $key = "$1";
             my $val = "$2";
             $val =~ s/^"//;
