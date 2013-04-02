@@ -33,6 +33,18 @@ $VERSION = "0.91";
 @EXPORT = qw(from_toml to_toml);
 $SYNTAX_ERROR = q(Syntax error);
 
+my %UNESCAPE = (
+    q{0} => "\x00",
+    q{b} => "\x08",
+    q{t} => "\x09",
+    q{n} => "\x0a",
+    q{f} => "\x0c",
+    q{r} => "\x0d",
+    q{"} => "\x22",
+    q{/} => "\x2f",
+    q{\\} => "\x5c",
+);
+
 sub to_toml {
     my $stuff = shift;
     local @_NAMESPACE = ();
@@ -138,12 +150,17 @@ sub from_toml {
             my $val = "$2";
             $val =~ s/^"//;
             $val =~ s/"$//;
-            $val =~ s/\\0/\x00/g;
-            $val =~ s/\\t/\x09/g;
-            $val =~ s/\\n/\x0a/g;
-            $val =~ s/\\r/\x0d/g;
-            $val =~ s/\\"/\x22/g;
-            $val =~ s/\\\\/\x5c/g;
+            $val =~ s!
+                \\([0btnfr"/\\])
+                |
+                \\u([0-9A-Fa-f]{4})
+            !
+                if (defined $1) {
+                    $UNESCAPE{$1}
+                } else {
+                    pack "U", hex $2;
+                }
+            !gex;
 
             if ($cur) {
                 $cur->{ $key } = $val;
