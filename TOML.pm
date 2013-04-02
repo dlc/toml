@@ -29,7 +29,7 @@ use B;
 use Carp qw(croak);
 use Text::Balanced qw(extract_bracketed);
 
-$VERSION = "0.91";
+$VERSION = "0.92";
 @EXPORT = qw(from_toml to_toml);
 $SYNTAX_ERROR = q(Syntax error);
 
