@@ -313,4 +313,6 @@ Darren Chamberlain <darren@cpan.org>
 
 =item Matthias Bethke <matthias@towiski.de>
 
+=item Sergey Romanov <complefor@rambler.ru>
+
 =back
