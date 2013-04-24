@@ -1,3 +1,11 @@
+2013-04-24  Darren Chamberlain <dlc@sevenroot.org>
+
+	* COPYING, MANIFEST, README: Added another contributor, and GPL.
+
+2013-04-03  Darren Chamberlain <dlc@sevenroot.org>
+
+	* Changelog: Add Changelog, per issues/5
+
 2013-04-03  Darren Chamberlain <dlc@sevenroot.org>
 
 	* TOML.pm: Added forgotten contributor (sorry!)
