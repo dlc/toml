@@ -23,26 +23,15 @@ package TOML;
 use strict;
 use base qw(Exporter);
 
-our ($VERSION, @EXPORT, $SYNTAX_ERROR, @_NAMESPACE);
+our ($VERSION, @EXPORT, @_NAMESPACE, $PARSER);
 
 use B;
 use Carp qw(croak);
-use Text::Balanced qw(extract_bracketed);
+use TOML::Parser;
 
 $VERSION = "0.92";
 @EXPORT = qw(from_toml to_toml);
-$SYNTAX_ERROR = q(Syntax error);
-
-my %UNESCAPE = (
-    q{b} => "\x08",
-    q{t} => "\x09",
-    q{n} => "\x0a",
-    q{f} => "\x0c",
-    q{r} => "\x0d",
-    q{"} => "\x22",
-    q{/} => "\x2f",
-    q{\\} => "\x5c",
-);
+$PARSER = TOML::Parser->new;
 
 sub to_toml {
     my $stuff = shift;
@@ -59,13 +48,13 @@ sub _to_toml {
         for my $key (grep { ref $stuff->{$_} ne 'HASH' } @keys) {
             my $val = $stuff->{$key};
             $res .= "$key = " . _serialize($val) . "\n";
-        } 
+        }
         for my $key (grep { ref $stuff->{$_} eq 'HASH' } @keys) {
             my $val = $stuff->{$key};
             local @_NAMESPACE = (@_NAMESPACE, $key);
             $res .= sprintf("[%s]\n", join(".", @_NAMESPACE));
             $res .= _to_toml($val);
-        } 
+        }
         return $res;
     } else {
         croak("You cannot convert non-HashRef values to TOML");
@@ -80,7 +69,7 @@ sub _serialize {
     return $value
         if $flags & ( B::SVp_IOK | B::SVp_NOK ) and !( $flags & B::SVp_POK ); # SvTYPE is IV or NV?
 
-    my $type = ref($value); 
+    my $type = ref($value);
     if (!$type) {
         return string_to_json($value);
     } elsif ($type eq 'ARRAY') {
@@ -122,129 +111,9 @@ sub string_to_json {
 
 sub from_toml {
     my $string = shift;
-    my %toml;   # Final data structure
-    my $cur;
-    my $err;    # Error
-    my $lineno = 0;
-
-    # Normalize
-    $string =
-        join "\n",
-        grep !/^$/,
-        map { s/^\s*//; s/\s*$//; $_ } 
-        map { s/#.*//; $_ }
-        split /[\n\r]/, $string;
-
-    while ($string) {
-        # strip leading whitespace, including newlines
-        $string =~ s/^\s*//s;
-        $lineno++;
-
-        # Store current value, to check for invalid syntax
-        my $string_start = $string;
-
-        # Strings
-        if ($string =~ s/^(\S+)\s*=\s*"(.+)"\s*//) {
-            my $key = "$1";
-            my $val = "$2";
-            $val =~ s/^"//;
-            $val =~ s/"$//;
-            $val =~ s!
-                \\([btnfr"/\\])
-                |
-                \\u([0-9A-Fa-f]{4})
-            !
-                if (defined $1) {
-                    $UNESCAPE{$1}
-                } else {
-                    pack "U", hex $2;
-                }
-            !gex;
-
-            if ($cur) {
-                $cur->{ $key } = $val;
-            }
-            else {
-                $toml{ $key } = $val;
-            }
-        }
-
-        # Boolean
-        if ($string =~ s/^(\S+)\s*=\s*(true|false)//i) {
-            my $key = "$1";
-            my $num = lc($2) eq "true" ? "true" : "false";
-            if ($cur) {
-                $cur->{ $key } = $num;
-            }
-            else {
-                $toml{ $key } = $num;
-            }
-        }
-
-        # Date
-        if ($string =~ s/^(\S+)\s*=\s*(\d\d\d\d\-\d\d\-\d\dT\d\d:\d\d:\d\dZ)\s*//) {
-            my $key = "$1";
-            my $date = "$2";
-            if ($cur) {
-                $cur->{ $key } = $date;
-            }
-            else {
-                $toml{ $key } = $date;
-            }
-        }
-
-        # Numbers
-        if ($string =~ s/^(\S+)\s*=\s*([+-]?[\d.]+)(?:\n|\z)//) {
-            my $key = "$1";
-            my $num = $2;
-            if ($cur) {
-                $cur->{ $key } = $num;
-            }
-            else {
-                $toml{ $key } = $num;
-            }
-        }
-
-        # Arrays
-        if ($string =~ s/^(\S+)\s=\s*(\[)/[/) {
-            my $key = "$1";
-            my $match;
-            ($match, $string) = extract_bracketed($string, "[]");
-            if ($cur) {
-                $cur->{ $key } = eval $match || $match;
-            }
-            else {
-                $toml{ $key } = eval $match || $match;
-            }
-        }
-
-        # New section
-        elsif ($string =~ s/^\[([^]]+)\]\s*//) {
-            my $section = "$1";
-            $cur = undef;
-            my @bits = split /\./, $section;
-
-            for my $bit (@bits) {
-                if ($cur) {
-                    $cur->{ $bit } ||= { };
-                    $cur = $cur->{ $bit };
-                }
-                else {
-                    $toml{ $bit } ||= { };
-                    $cur = $toml{ $bit };
-                }
-            }
-        }
-
-        if ($string eq $string_start) {
-            # If $string hasn't been modified by this point, then
-            # it contains invalid syntax.
-           (my $err_bits = $string) =~ s/(.+?)\n.*//s;
-            return wantarray ? (undef, "$SYNTAX_ERROR at line $lineno: $err_bits") : undef;
-        }
-    }
-
-    return wantarray ? (\%toml, $err) : \%toml;
+    local $@;
+    my $toml = eval { $PARSER->parse($string) };
+    return wantarray ? ($toml, $@) : $toml;
 }
 
 1;
