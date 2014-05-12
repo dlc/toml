@@ -10,8 +10,7 @@ my %dist = (
 );
 
 my %prereq = (
-    'Text::Balanced' => 0,
-    'TOML::Parser'   => 0,
+    'TOML::Parser' => 0,
 );
 
 WriteMakefile(
