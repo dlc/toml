@@ -31,7 +31,7 @@ use TOML::Parser;
 
 $VERSION = "0.92";
 @EXPORT = qw(from_toml to_toml);
-$PARSER = TOML::Parser->new;
+$PARSER = TOML::Parser->new(inflate_boolean  => sub { $_[0] });
 
 sub to_toml {
     my $stuff = shift;
