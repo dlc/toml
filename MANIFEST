@@ -4,9 +4,6 @@ Makefile.PL
 MANIFEST
 MANIFEST.SKIP
 README
-t/broken.t
-t/escape.t
-t/example.t
 t/reparse.t
 t/to_toml.t
 TOML.pm
